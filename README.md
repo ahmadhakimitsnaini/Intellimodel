@@ -1,57 +1,162 @@
-##STRUKTUR DIREKTORI
+# AutoML SaaS Platform
 
-automl-saas/                  # Folder Utama (Root)
+A No-Code Automated Machine Learning platform. Upload a CSV, train a model, get a prediction API.
+
+---
+
+## Architecture
+
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│                         BROWSER (User)                              │
+│                                                                     │
+│  ┌─────────────────────────────────────────────────────────────┐   │
+│  │               React / Next.js Frontend                      │   │
+│  │                                                             │   │
+│  │  • Supabase Auth   → login / signup                        │   │
+│  │  • Supabase Storage → direct CSV upload (no backend!)      │   │
+│  │  • Supabase DB     → read project status, scores           │   │
+│  │  • FastAPI         → POST /train  (trigger ML job)         │   │
+│  │                      POST /predict/{id} (get predictions)  │   │
+│  └─────────────────────────────────────────────────────────────┘   │
+└────────────────────────┬────────────────────────────────────────────┘
+                         │  HTTP (REST)
+              ┌──────────▼──────────┐
+              │   FastAPI ML Worker  │
+              │   (Pure ML Engine)   │
+              │                     │
+              │  1. Download CSV     │──────────────────────┐
+              │  2. Preprocess       │                      │
+              │  3. Auto-train 3     │              ┌───────▼──────────────┐
+              │     models           │              │     Supabase          │
+              │  4. Upload .joblib   │◄─────────────│                       │
+              │  5. Update DB status │              │  • Auth (users)        │
+              │  6. Serve /predict   │              │  • PostgreSQL (projects│
+              └─────────────────────┘              │    prediction_logs)    │
+                                                   │  • Storage             │
+                                                   │    datasets/           │
+                                                   │    models/             │
+                                                   └───────────────────────┘
+```
+
+---
+
+## Project Structure
+
+```
+automl-saas/
 │
-├── README.md                 # Dokumentasi arsitektur proyek
+├── supabase/
+│   └── init.sql                    # DB tables, RLS policies, Storage bucket config
 │
-├── supabase/                 # 🗄️ FOLDER DATABASE
-│   └── init.sql              # Skema tabel, fungsi trigger, dan aturan RLS
+├── frontend/                       # React / Next.js application
+│   └── src/
+│       ├── components/
+│       │   ├── auth/               # Login, Signup, AuthGuard
+│       │   ├── dashboard/          # Project list, status cards
+│       │   ├── upload/             # CSV drag-drop, column selector
+│       │   └── predict/            # Prediction form and results
+│       ├── hooks/                  # useProjects, useAuth, usePrediction
+│       ├── lib/
+│       │   └── supabaseClient.ts   # Supabase JS client (anon key)
+│       └── pages/                  # Next.js pages (or React Router routes)
 │
-├── ml-service/               # 🧠 FOLDER BACKEND (Python / FastAPI)
-│   ├── .env                  # (Buat manual) Isi SUPABASE_URL & SUPABASE_SERVICE_KEY
-│   ├── requirements.txt      # Daftar library Python (FastAPI, pandas, scikit-learn, dll)
-│   ├── tests/
-│   │   ├── test_health.py    # Unit test untuk endpoint health
-│   │   └── test_pipeline.py  # Unit test untuk mesin AutoML
-│   └── app/
-│       ├── main.py           # Entry point aplikasi FastAPI
-│       ├── api/
-│       │   └── routes/
-│       │       ├── health.py # Endpoint /health
-│       │       ├── predict.py# Endpoint /predict/{project_id}
-│       │       └── train.py  # Endpoint /train
-│       ├── core/
-│       │   ├── config.py     # Pengaturan environment variables
-│       │   └── supabase_client.py # Koneksi Supabase Service Role
-│       ├── models/
-│       │   └── schemas.py    # Pydantic models (Validasi input/output)
-│       ├── services/
-│       │   ├── automl.py     # Orkestrator utama (pengatur alur)
-│       │   ├── preprocessor.py # Pembersih data otomatis (Data Scientist AI)
-│       │   ├── storage.py    # Interaksi baca/tulis ke Supabase Storage & DB
-│       │   └── trainer.py    # Pelatih 3 model Machine Learning
-│       └── utils/
-│           └── model_cache.py# Sistem caching di RAM agar prediksi super cepat
-│
-└── frontend/                 # 💻 FOLDER FRONTEND (Next.js / React)
-    ├── .env.local            # (Buat manual) Isi URL Supabase, Anon Key & URL FastAPI
-    ├── package.json          # Konfigurasi dependensi Node.js (React, Tailwind, dll)
-    └── src/
-        ├── app/
-        │   ├── globals.css   # Styling global dan konfigurasi Tailwind CSS
-        │   └── dashboard/
-        │       └── page.tsx  # Halaman utama (Dashboard) setelah user login
-        ├── components/
-        │   ├── dashboard/
-        │   │   └── AppShell.tsx   # Layout utama (Navbar & Footer)
-        │   ├── predict/
-        │   │   └── PredictPanel.tsx # Formulir prediksi dinamis
-        │   ├── ui/
-        │   │   └── index.tsx      # Komponen UI yang bisa dipakai ulang (Badge, Loading, dll)
-        │   └── upload/
-        │       └── CSVUploader.tsx  # Komponen Drag & Drop file CSV
-        ├── hooks/
-        │   ├── useAuth.ts         # Hook untuk session login/logout Supabase
-        │   └── useProjects.ts     # Hook realtime database untuk daftar project
-        └── lib/
-            └── supabase.ts        # Setup Supabase client untuk browser (ANON_KEY)
+└── ml-service/                     # FastAPI ML Microservice
+    ├── app/
+    │   ├── main.py                 # ← App entry point, router registration
+    │   ├── core/
+    │   │   ├── config.py           # ← Settings (pydantic-settings + .env)
+    │   │   └── supabase_client.py  # ← Supabase SERVICE ROLE client singleton
+    │   ├── api/
+    │   │   └── routes/
+    │   │       ├── health.py       # ← GET /health/ (liveness + readiness)
+    │   │       ├── train.py        # ← POST /train/ (AutoML pipeline trigger)
+    │   │       └── predict.py      # ← POST /predict/{project_id}
+    │   ├── models/                 # Pydantic schemas (Step 2+)
+    │   ├── services/               # Business logic (Step 2+)
+    │   └── utils/                  # Helpers (Step 2+)
+    ├── tests/
+    │   └── test_health.py          # ← Health endpoint tests
+    ├── requirements.txt
+    ├── pytest.ini
+    ├── Dockerfile
+    └── .env.example
+```
+
+---
+
+## Quick Start
+
+### 1. Supabase Setup
+1. Create a new project at [supabase.com](https://supabase.com)
+2. Go to **SQL Editor** → paste and run `supabase/init.sql`
+3. Go to **Storage** → create two buckets: `datasets` (private) and `models` (private)
+
+### 2. ML Service (FastAPI)
+```bash
+cd ml-service
+
+# Copy and configure environment
+cp .env.example .env
+# Edit .env — set SUPABASE_URL and SUPABASE_SERVICE_KEY
+
+# Install dependencies
+pip install -r requirements.txt
+
+# Run development server
+uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+
+# Run tests
+pytest tests/ -v
+
+# Check health
+curl http://localhost:8000/health/
+curl http://localhost:8000/health/ready
+curl http://localhost:8000/health/detail
+```
+
+### 3. Using Docker Compose (recommended)
+```bash
+# From project root
+cp ml-service/.env.example ml-service/.env
+# Edit ml-service/.env
+
+docker-compose up --build
+```
+
+---
+
+## Environment Variables
+
+### ML Service (`ml-service/.env`)
+
+| Variable | Required | Description |
+|---|---|---|
+| `SUPABASE_URL` | ✅ | Your Supabase project URL |
+| `SUPABASE_SERVICE_KEY` | ✅ | Service role key (bypasses RLS — keep secret!) |
+| `ENVIRONMENT` | ❌ | `development` \| `staging` \| `production` |
+| `DATASETS_BUCKET` | ❌ | Storage bucket name for CSVs (default: `datasets`) |
+| `MODELS_BUCKET` | ❌ | Storage bucket name for models (default: `models`) |
+| `TRAINING_TIMEOUT_SEC` | ❌ | Max seconds per training job (default: `300`) |
+| `MODEL_CACHE_SIZE` | ❌ | Models to keep hot in memory (default: `10`) |
+
+### Frontend (`.env.local`)
+
+| Variable | Required | Description |
+|---|---|---|
+| `NEXT_PUBLIC_SUPABASE_URL` | ✅ | Same Supabase URL (safe to expose) |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | ✅ | Anon/public key (RLS-protected) |
+| `NEXT_PUBLIC_FASTAPI_URL` | ✅ | URL of the FastAPI service |
+
+---
+
+## Build Roadmap
+
+| Step | Status | Description |
+|---|---|---|
+| **Step 1** | ✅ Done | Project setup, Supabase init SQL, FastAPI boilerplate |
+| **Step 2** | 🔜 Next | AutoML pipeline (preprocess → train → evaluate → upload) |
+| **Step 3** | 🔜 | Frontend: Auth, CSV upload, column selector |
+| **Step 4** | 🔜 | Prediction endpoint with model caching |
+| **Step 5** | 🔜 | Frontend: Dashboard + prediction UI |
+| **Step 6** | 🔜 | Production hardening (rate limiting, error recovery) |
