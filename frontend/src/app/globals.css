@@ -1,0 +1,161 @@
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600&family=DM+Sans:wght@300;400;500;600&family=DM+Serif+Display:ital@0;1&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ── Base resets ─────────────────────────────────────────────── */
+@layer base {
+  *, *::before, *::after { box-sizing: border-box; }
+
+  html {
+    color-scheme: dark;
+    scroll-behavior: smooth;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  body {
+    @apply bg-surface text-ink-2 font-sans;
+    min-height: 100dvh;
+  }
+
+  ::selection {
+    background: rgba(201, 125, 58, 0.25);
+    color: #e8eaf0;
+  }
+
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: #111318; }
+  ::-webkit-scrollbar-thumb { background: #2a2f3a; border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: #363c4a; }
+}
+
+/* ── Component layer ─────────────────────────────────────────── */
+@layer components {
+
+  /* Animated page entry */
+  .page-enter {
+    animation: fadeUp 0.45s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  }
+
+  /* Card surface */
+  .card {
+    @apply bg-surface-2 border border-surface-border rounded-lg;
+  }
+
+  .card-elevated {
+    @apply bg-surface-2 border border-surface-border rounded-lg shadow-surface-lg;
+  }
+
+  /* Copper accent line on top of cards */
+  .card-accent {
+    @apply relative overflow-hidden;
+  }
+  .card-accent::before {
+    content: '';
+    @apply absolute top-0 left-0 right-0 h-px bg-copper-gradient;
+  }
+
+  /* Input base */
+  .input-base {
+    @apply w-full bg-surface-3 border border-surface-border rounded-md
+           px-3 py-2.5 text-sm font-mono text-ink-1
+           placeholder-ink-4
+           focus:outline-none focus:border-copper focus:ring-1 focus:ring-copper/30
+           transition-colors duration-150;
+  }
+
+  /* Button variants */
+  .btn-primary {
+    @apply inline-flex items-center justify-center gap-2
+           bg-copper text-surface font-sans font-medium text-sm
+           px-4 py-2.5 rounded-md
+           hover:bg-copper-light
+           active:scale-[0.98]
+           transition-all duration-150
+           disabled:opacity-40 disabled:cursor-not-allowed disabled:scale-100
+           focus:outline-none focus:ring-2 focus:ring-copper/50;
+  }
+
+  .btn-secondary {
+    @apply inline-flex items-center justify-center gap-2
+           bg-surface-3 text-ink-2 font-sans font-medium text-sm
+           border border-surface-border
+           px-4 py-2.5 rounded-md
+           hover:bg-surface-4 hover:text-ink-1 hover:border-surface-border-bright
+           active:scale-[0.98]
+           transition-all duration-150
+           disabled:opacity-40 disabled:cursor-not-allowed
+           focus:outline-none focus:ring-2 focus:ring-surface-border-bright/50;
+  }
+
+  .btn-ghost {
+    @apply inline-flex items-center justify-center gap-2
+           text-ink-3 font-sans text-sm
+           px-3 py-2 rounded-md
+           hover:text-ink-1 hover:bg-surface-3
+           transition-all duration-150
+           focus:outline-none;
+  }
+
+  /* Status badge */
+  .badge {
+    @apply inline-flex items-center gap-1.5 px-2 py-0.5
+           rounded text-xs font-mono font-medium;
+  }
+  .badge-pending   { @apply bg-ink-5 text-ink-3 border border-ink-5; }
+  .badge-training  { @apply bg-copper-glow text-copper border border-copper/30; }
+  .badge-completed { @apply bg-jade-glow text-jade border border-jade/30; }
+  .badge-failed    { @apply bg-crimson-glow text-crimson border border-crimson/30; }
+
+  /* Mono label */
+  .mono-label {
+    @apply text-xs font-mono text-ink-4 uppercase tracking-widest;
+  }
+
+  /* Section divider */
+  .divider {
+    @apply border-t border-surface-border;
+  }
+
+  /* Shimmer loading skeleton */
+  .skeleton {
+    @apply rounded bg-surface-3;
+    background: linear-gradient(90deg, #16191f 25%, #1c2028 50%, #16191f 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.8s ease-in-out infinite;
+  }
+}
+
+/* ── Utility extras ──────────────────────────────────────────── */
+@layer utilities {
+  .text-gradient-copper {
+    background: linear-gradient(135deg, #e09050, #c97d3a);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .border-copper-glow {
+    box-shadow: 0 0 0 1px rgba(201,125,58,0.4), 0 0 12px rgba(201,125,58,0.1);
+  }
+
+  .noise-overlay {
+    position: relative;
+  }
+  .noise-overlay::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
+    pointer-events: none;
+    border-radius: inherit;
+  }
+
+  .grid-bg {
+    background-image: linear-gradient(rgba(42,47,58,0.35) 1px, transparent 1px),
+                      linear-gradient(90deg, rgba(42,47,58,0.35) 1px, transparent 1px);
+    background-size: 32px 32px;
+  }
+}
