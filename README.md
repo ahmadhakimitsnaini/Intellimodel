@@ -43,46 +43,6 @@ A No-Code Automated Machine Learning platform. Upload a CSV, train a model, get 
 
 ## Project Structure
 
-```
-automl-saas/
-│
-├── supabase/
-│   └── init.sql                    # DB tables, RLS policies, Storage bucket config
-│
-├── frontend/                       # React / Next.js application
-│   └── src/
-│       ├── components/
-│       │   ├── auth/               # Login, Signup, AuthGuard
-│       │   ├── dashboard/          # Project list, status cards
-│       │   ├── upload/             # CSV drag-drop, column selector
-│       │   └── predict/            # Prediction form and results
-│       ├── hooks/                  # useProjects, useAuth, usePrediction
-│       ├── lib/
-│       │   └── supabaseClient.ts   # Supabase JS client (anon key)
-│       └── pages/                  # Next.js pages (or React Router routes)
-│
-└── ml-service/                     # FastAPI ML Microservice
-    ├── app/
-    │   ├── main.py                 # ← App entry point, router registration
-    │   ├── core/
-    │   │   ├── config.py           # ← Settings (pydantic-settings + .env)
-    │   │   └── supabase_client.py  # ← Supabase SERVICE ROLE client singleton
-    │   ├── api/
-    │   │   └── routes/
-    │   │       ├── health.py       # ← GET /health/ (liveness + readiness)
-    │   │       ├── train.py        # ← POST /train/ (AutoML pipeline trigger)
-    │   │       └── predict.py      # ← POST /predict/{project_id}
-    │   ├── models/                 # Pydantic schemas (Step 2+)
-    │   ├── services/               # Business logic (Step 2+)
-    │   └── utils/                  # Helpers (Step 2+)
-    ├── tests/
-    │   └── test_health.py          # ← Health endpoint tests
-    ├── requirements.txt
-    ├── pytest.ini
-    ├── Dockerfile
-    └── .env.example
-```
-
 ---
 
 ## Quick Start
