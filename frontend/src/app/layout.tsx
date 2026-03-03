@@ -1,0 +1,1 @@
+// craete new file tsx file in app folder and name it layout.tsx

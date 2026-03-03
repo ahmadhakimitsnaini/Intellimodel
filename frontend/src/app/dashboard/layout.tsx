@@ -1,0 +1,1 @@
+// create new file tsx file in app/dashboard folder and name it layout.tsx
