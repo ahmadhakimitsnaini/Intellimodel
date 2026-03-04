@@ -29,7 +29,8 @@ from supabase import Client
 
 from app.core.supabase_client import get_supabase_client_dependency
 from app.models.schemas import ProjectStatus, TrainRequest, TrainResponse
-from app.services.automl import AutoMLPipeline
+from application.training.automl_pipeline import AutoMLPipeline
+# from app.services.automl import AutoMLPipeline
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
