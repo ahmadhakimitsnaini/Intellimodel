@@ -307,3 +307,5 @@ class StorageService:
             }).execute()
         except Exception as exc:
             logger.warning(f"Failed to write prediction log: {exc}")
+
+# app/services/storage.py → app/infrastructure/supabase_storage.py

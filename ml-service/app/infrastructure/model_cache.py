@@ -176,3 +176,5 @@ class ModelLRUCache:
 # ── Module-level singleton ────────────────────────────────────────────────────
 # Imported everywhere via: from app.utils.model_cache import model_cache
 model_cache: ModelLRUCache = ModelLRUCache()
+
+# app/utils/model_cache.py → app/infrastructure/model_cache.py
