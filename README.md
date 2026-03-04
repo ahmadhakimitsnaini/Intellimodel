@@ -1,4 +1,4 @@
-# AutoML SaaS Platform
+# AutoML SaaS Platform (Intellimodel)
 
 A No-Code Automated Machine Learning platform. Upload a CSV, train a model, get a prediction API.
 
@@ -115,7 +115,7 @@ docker-compose up --build
 | Step | Status | Description |
 |---|---|---|
 | **Step 1** | ✅ Done | Project setup, Supabase init SQL, FastAPI boilerplate |
-| **Step 2** | 🔜 Next | AutoML pipeline (preprocess → train → evaluate → upload) |
+| **Step 2** | ✅ Done | AutoML pipeline (preprocess → train → evaluate → upload) |
 | **Step 3** | 🔜 | Frontend: Auth, CSV upload, column selector |
 | **Step 4** | 🔜 | Prediction endpoint with model caching |
 | **Step 5** | 🔜 | Frontend: Dashboard + prediction UI |
