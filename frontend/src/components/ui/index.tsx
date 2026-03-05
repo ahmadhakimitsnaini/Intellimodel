@@ -7,6 +7,15 @@
  * Keeps the design system consistent and imports DRY.
  */
 
+export * from "./StatusBadge";
+export * from "./ScoreRing";
+export * from "./MetricCard";
+export * from "./ModelComparisonBar";
+export * from "./TrainingPulse";
+export * from "./EmptyState";
+export * from "./Spinner";
+export * from "./PageLoader";
+
 import { cn, formatScore, formatMetricName, formatModelName } from "@/lib/utils";
 import type { ProjectStatus } from "@/lib/supabase";
 import {
