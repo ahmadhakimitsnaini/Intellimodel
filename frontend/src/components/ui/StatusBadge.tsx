@@ -1,8 +1,8 @@
 "use client";
 
-import { cn } from "@/lib/utils";
-import type { ProjectStatus } from "@/lib/supabase";
 import { Clock, Zap, CheckCircle2, XCircle } from "lucide-react";
+import { cn } from "@/lib/utils";
+import type { ProjectStatus } from "@/models";
 
 const STATUS_CONFIG: Record<
   ProjectStatus,

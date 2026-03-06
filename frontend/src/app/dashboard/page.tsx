@@ -16,12 +16,12 @@
 
 import { use } from "react";
 import Link from "next/link";
-import { useSingleProject } from "@/hooks/useProjects";
+import { useSingleProject } from "@/features/projects";
 import {
   StatusBadge, ScoreRing, ModelComparisonBar,
   MetricCard, TrainingPulse, Spinner,
 } from "@/components/ui";
-import { PredictPanel } from "@/components/predict/PredictPanel";
+import { PredictionPanel } from "@/features/prediction";
 import {
   cn, formatModelName, formatMetricName, formatScore,
   timeAgo, truncate,
@@ -299,7 +299,7 @@ export default function ProjectPage({ params }: PageProps) {
               </div>
             </div>
             <div className="p-6">
-              <PredictPanel project={project} />
+              <PredictionPanel project={project} />
             </div>
           </div>
         </div>

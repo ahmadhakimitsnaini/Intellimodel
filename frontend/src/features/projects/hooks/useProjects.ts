@@ -13,7 +13,8 @@
  */
 
 import { useEffect, useState, useCallback, useRef } from "react";
-import { supabase, type Project } from "@/lib/supabase";
+import { supabase } from "@/lib/supabase/client";
+import type { Project } from "@/models";
 
 interface UseProjectsResult {
   projects: Project[];
