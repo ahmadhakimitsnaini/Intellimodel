@@ -12,9 +12,9 @@
  */
 
 import { useState, useEffect } from "react";
-import { FASTAPI_URL } from "@/lib/supabase";
+import { FASTAPI_URL } from "@/lib/config/env";
 import { cn, formatModelName } from "@/lib/utils";
-import type { Project } from "@/lib/supabase";
+import type { Project } from "@/models";
 import {
   Loader2, Send, AlertCircle, Sparkles,
   BarChart3, TrendingUp, RefreshCw,

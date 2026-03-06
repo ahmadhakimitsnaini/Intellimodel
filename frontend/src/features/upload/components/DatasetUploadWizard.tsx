@@ -15,7 +15,9 @@
 
 import { useState, useCallback, useRef } from "react";
 import Papa from "papaparse";
-import { supabase, FASTAPI_URL, type Project } from "@/lib/supabase";
+import { supabase } from "@/lib/supabase/client";
+import { FASTAPI_URL } from "@/lib/config/env";
+import type { Project } from "@/models";
 import { cn } from "@/lib/utils";
 import {
   Upload, FileText, X, ChevronDown, Loader2,

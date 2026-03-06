@@ -11,7 +11,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuth } from "@/features/auth";
 import {
   LayoutDashboard, Upload, LogOut, ChevronDown,
   Activity, Settings, User, Cpu,
