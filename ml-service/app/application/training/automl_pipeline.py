@@ -23,10 +23,10 @@ import time
 from supabase import Client
 
 from app.core.config import settings
-from app.models.schemas import ProjectRow, ProjectStatus, TrainingResult
-from app.services.preprocessor import DataPreprocessor
-from app.services.storage import StorageService
-from app.services.trainer import ModelTrainer
+from app.domain.models import ProjectRow, ProjectStatus, TrainingResult
+from app.application.training.preprocessor import DataPreprocessor
+from app.infrastructure.supabase_storage import StorageService
+from app.application.training.trainer import ModelTrainer
 
 logger = logging.getLogger(__name__)
 
