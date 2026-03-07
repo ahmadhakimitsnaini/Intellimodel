@@ -20,21 +20,26 @@ GET /predict/{project_id}/schema — Returns expected input schema for a model.
 
 import logging
 import time
-from typing import Dict, Any, Optional
+from typing import Dict, Any
 
 import numpy as np
 import pandas as pd
+from fastapi import APIRouter, Depends, HTTPException, status
+from supabase import Client
 
-from app.models.schemas import (
+from app.core.supabase_client import get_supabase_client_dependency
+from app.domain.models import (
     PredictRequest,
     PredictResponse,
     ProjectStatus,
     TaskType,
 )
-from app.services.storage import StorageService
-from app.utils.model_cache import model_cache
+from app.infrastructure.supabase_storage import StorageService
+from app.infrastructure.model_cache import model_cache
 
 logger = logging.getLogger(__name__)
+router = APIRouter()
+
 
 class PredictionService:
     def __init__(self, storage_service: StorageService):
@@ -193,3 +198,34 @@ class PredictionService:
             model_version=winning_model or "unknown",
             latency_ms=latency_ms,
         )
+
+
+@router.post(
+    "/{project_id}",
+    response_model=PredictResponse,
+    status_code=status.HTTP_200_OK,
+    summary="Run prediction for a trained project model",
+)
+def predict(
+    project_id: str,
+    payload: PredictRequest,
+    supabase: Client = Depends(get_supabase_client_dependency),
+) -> PredictResponse:
+    """
+    FastAPI route that delegates to PredictionService.
+    """
+    storage = StorageService(supabase)
+    service = PredictionService(storage_service=storage)
+
+    try:
+        return service.execute_prediction(project_id, payload)
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e),
+        ) from e
+    except RuntimeError as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=str(e),
+        ) from e
