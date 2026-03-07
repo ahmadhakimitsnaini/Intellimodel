@@ -44,8 +44,8 @@ from sklearn.metrics import (
 )
 from sklearn.pipeline import Pipeline
 
-from app.models.schemas import DatasetProfile, ModelResult, TaskType
-from app.services.preprocessor import PreprocessedData
+from app.domain.models import DatasetProfile, ModelResult, TaskType
+from app.application.training.preprocessor import PreprocessedData
 
 logger = logging.getLogger(__name__)
 

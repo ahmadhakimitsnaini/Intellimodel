@@ -30,7 +30,7 @@ from sklearn.pipeline import Pipeline
 from supabase import Client
 
 from app.core.config import settings
-from app.models.schemas import ProjectRow, ProjectStatus, TaskType, TrainingResult
+from app.domain.models import ProjectRow, ProjectStatus, TaskType, TrainingResult
 
 logger = logging.getLogger(__name__)
 
