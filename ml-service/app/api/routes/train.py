@@ -28,9 +28,8 @@ from fastapi import APIRouter, BackgroundTasks, Depends, status
 from supabase import Client
 
 from app.core.supabase_client import get_supabase_client_dependency
-from app.models.schemas import ProjectStatus, TrainRequest, TrainResponse
-from application.training.automl_pipeline import AutoMLPipeline
-# from app.services.automl import AutoMLPipeline
+from app.domain.models import ProjectStatus, TrainRequest, TrainResponse
+from app.application.training.automl_pipeline import AutoMLPipeline
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
