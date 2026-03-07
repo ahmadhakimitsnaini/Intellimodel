@@ -33,7 +33,7 @@ from sklearn.impute import SimpleImputer
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import LabelEncoder, OneHotEncoder, StandardScaler
 
-from app.models.schemas import DatasetProfile, TaskType
+from app.domain.models import DatasetProfile, TaskType
 
 logger = logging.getLogger(__name__)
 
