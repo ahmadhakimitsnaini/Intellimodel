@@ -86,3 +86,53 @@
 ├── supabase
 │   └── init.sql
 └── tree.md
+
+frontend/src
+  app/
+    layout.tsx
+    globals.css
+    dashboard/
+      layout.tsx
+      page.tsx
+
+  components/
+    dashboard/
+      AppShell.tsx
+    ui/
+      StatusBadge.tsx
+      ScoreRing.tsx
+      MetricCard.tsx
+      ModelComparisonBar.tsx
+      TrainingPulse.tsx
+      EmptyState.tsx
+      Spinner.tsx
+      PageLoader.tsx
+      index.tsx
+
+  features/
+    auth/
+      hooks/useAuth.ts
+      index.ts
+    projects/
+      hooks/useProjects.ts
+      index.ts
+    upload/
+      components/DatasetUploadWizard.tsx
+      index.ts
+    prediction/
+      components/PredictionPanel.tsx
+      index.ts
+
+  lib/
+    supabase/
+      client.ts
+    config/
+      env.ts
+    utils/
+      index.ts
+
+  models/
+    project.ts
+    user.ts
+    prediction.ts
+    index.ts
