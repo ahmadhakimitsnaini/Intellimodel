@@ -17,20 +17,41 @@ import {
   Activity, Settings, User, Cpu,
 } from "lucide-react";
 
+/**
+ * Properti untuk komponen AppShell.
+ * @property {React.ReactNode} children - Konten spesifik halaman yang akan dirender di dalam area main.
+ */
 interface AppShellProps {
   children: React.ReactNode;
 }
 
+// Konfigurasi daftar menu navigasi utama untuk memudahkan penambahan menu di masa depan.
 const NAV_ITEMS = [
   { href: "/dashboard",      label: "Dashboard", icon: LayoutDashboard },
   { href: "/dashboard/new",  label: "New Model", icon: Upload },
 ];
 
+/**
+ * AppShell Component
+ * * Berfungsi sebagai kerangka global untuk halaman yang terautentikasi (Dashboard).
+ * Komponen ini menyertakan Header (Navigasi & User Dropdown), Area Konten Utama, dan Footer.
+ * * @param {AppShellProps} props - Props komponen yang membungkus konten dinamis (children).
+ * @returns {JSX.Element} Elemen layout dashboard utuh.
+ */
 export function AppShell({ children }: AppShellProps) {
+  // Mengambil data user yang sedang login dan fungsi signOut dari custom hook useAuth
   const { user, signOut } = useAuth();
+  
+  // Mengambil URL path saat ini untuk menentukan status "aktif" pada menu navigasi
   const pathname = usePathname();
+  
+  // State untuk mengontrol apakah menu dropdown profil pengguna sedang terbuka atau tertutup
   const [userMenuOpen, setUserMenuOpen] = useState(false);
 
+  // Logika pembentukan inisial pengguna (maksimal 2 huruf kapital):
+  // 1. Cek apakah ada full_name, jika ya ambil huruf pertama dari maksimal 2 kata pertama.
+  // 2. Jika tidak ada full_name, ambil 2 huruf pertama dari alamat email.
+  // 3. Fallback ke "??" jika datanya benar-benar kosong.
   const initials = user?.user_metadata?.full_name
     ? user.user_metadata.full_name.split(" ").map((n: string) => n[0]).join("").slice(0, 2).toUpperCase()
     : user?.email?.slice(0, 2).toUpperCase() ?? "??";
@@ -43,7 +64,7 @@ export function AppShell({ children }: AppShellProps) {
                          bg-surface-1/80 backdrop-blur-sm">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between">
 
-          {/* Brand */}
+          {/* Brand Logo & Tittle */}
           <Link href="/dashboard" className="flex items-center gap-2.5 group">
             <div className="w-7 h-7 rounded-md bg-copper/10 border border-copper/25
                             flex items-center justify-center
@@ -53,10 +74,12 @@ export function AppShell({ children }: AppShellProps) {
             <span className="font-display text-lg text-ink-1 hidden sm:block">AutoML</span>
           </Link>
 
-          {/* Nav links */}
+          {/* Nav links (Daftar Menu Tengah) */}
           <nav className="flex items-center gap-1">
             {NAV_ITEMS.map(({ href, label, icon: Icon }) => {
+              // Validasi menu aktif: Aktif jika path persis sama, atau jika berada di sub-path (kecuali path /dashboard utama)
               const active = pathname === href || (href !== "/dashboard" && pathname.startsWith(href));
+              
               return (
                 <Link
                   key={href}
@@ -76,7 +99,7 @@ export function AppShell({ children }: AppShellProps) {
             })}
           </nav>
 
-          {/* User menu */}
+          {/* User menu (Dropdown Profil Kanan) */}
           <div className="relative">
             <button
               onClick={() => setUserMenuOpen((v) => !v)}
@@ -86,6 +109,7 @@ export function AppShell({ children }: AppShellProps) {
                 "transition-all duration-150 focus:outline-none"
               )}
             >
+              {/* Avatar Inisial */}
               <div className="w-6 h-6 rounded bg-copper/20 border border-copper/30
                               flex items-center justify-center">
                 <span className="font-mono text-[10px] font-bold text-copper">{initials}</span>
@@ -95,19 +119,22 @@ export function AppShell({ children }: AppShellProps) {
               </span>
               <ChevronDown className={cn(
                 "w-3.5 h-3.5 transition-transform duration-150",
-                userMenuOpen && "rotate-180"
+                userMenuOpen && "rotate-180" // Putar ikon panah ke atas saat menu terbuka
               )} />
             </button>
 
-            {/* Dropdown */}
+            {/* Dropdown Content */}
             {userMenuOpen && (
               <>
+                {/* Overlay layar penuh transparan (Click-away listener): Menutup dropdown jika user klik area di luar menu */}
                 <div
                   className="fixed inset-0 z-10"
                   onClick={() => setUserMenuOpen(false)}
                 />
                 <div className="absolute right-0 top-full mt-1.5 w-52 z-20
                                 card-elevated rounded-lg py-1 animate-fade-in">
+                  
+                  {/* Informasi Nama & Email Detail */}
                   <div className="px-3 py-2 border-b border-surface-border">
                     <p className="font-sans text-xs font-medium text-ink-1 truncate">
                       {user?.user_metadata?.full_name ?? "User"}
@@ -116,6 +143,8 @@ export function AppShell({ children }: AppShellProps) {
                       {user?.email}
                     </p>
                   </div>
+                  
+                  {/* Tombol Logout */}
                   <div className="py-1">
                     <button
                       className="w-full text-left px-3 py-2 flex items-center gap-2.5
@@ -135,6 +164,7 @@ export function AppShell({ children }: AppShellProps) {
       </header>
 
       {/* ── Page content ───────────────────────────────────────────────────── */}
+      {/* Area pembungkus dinamis di mana komponen halaman (children) akan disisipkan */}
       <main className="flex-1 max-w-6xl mx-auto w-full px-4 sm:px-6 py-8">
         {children}
       </main>
@@ -147,6 +177,7 @@ export function AppShell({ children }: AppShellProps) {
             <span className="font-mono text-xs">AutoML SaaS · FastAPI + Supabase</span>
           </div>
           <div className="flex items-center gap-1">
+            {/* Animasi titik nyala (pulse) sebagai indikator sistem berjalan normal */}
             <div className="w-1.5 h-1.5 rounded-full bg-jade animate-pulse" />
             <span className="font-mono text-xs text-ink-5">All systems operational</span>
           </div>
