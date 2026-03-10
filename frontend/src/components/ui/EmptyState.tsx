@@ -1,24 +1,21 @@
-"use client";
+import { EmptyState } from "@/components/ui/EmptyState";
+import { FolderPlus } from "lucide-react";
 
-import { Database } from "lucide-react";
+export default function ProjectList() {
+  const projects = [];
 
-interface EmptyStateProps {
-  icon?: React.ReactNode;
-  title: string;
-  description: string;
-  action?: React.ReactNode;
-}
+  if (projects.length === 0) {
+    return (
+      <EmptyState 
+        icon={<FolderPlus className="w-7 h-7" />}
+        title="Belum ada proyek"
+        description="Anda belum membuat proyek apapun. Silakan buat proyek pertama Anda untuk memulai."
+        action={<button className="bg-blue-500 text-white px-4 py-2 rounded">Buat Proyek</button>}
+      />
+    );
+  }
 
-export function EmptyState({ icon, title, description, action }: EmptyStateProps) {
   return (
-    <div className="flex flex-col items-center justify-center py-20 px-6 text-center">
-      <div className="w-16 h-16 rounded-2xl bg-surface-3 border border-surface-border
-                      flex items-center justify-center mb-5 text-ink-4">
-        {icon ?? <Database className="w-7 h-7" />}
-      </div>
-      <h3 className="font-display text-xl text-ink-1 mb-2">{title}</h3>
-      <p className="text-ink-4 text-sm font-mono max-w-xs mb-6">{description}</p>
-      {action}
-    </div>
+    // Render daftar proyek di sini
   );
 }
