@@ -3,15 +3,15 @@
 /**
  * app/dashboard/project/[id]/page.tsx
  *
- * The most important page in the app. Shows everything about one project:
+ * Halaman utama yang menampilkan keseluruhan detail dari satu project Machine Learning.
+ * Halaman ini menangani routing dinamis dan me-render UI berdasarkan 3 state utama:
+ * * 1. TRAINING STATE  → Menampilkan indikator progress animasi dan polling status.
+ * 2. COMPLETED STATE → Menampilkan visualisasi skor (ScoreRing), perbandingan model, 
+ * daftar fitur, dan panel prediksi interaktif.
+ * 3. FAILED STATE    → Menampilkan pesan error dari backend beserta CTA untuk re-train.
  *
- * TRAINING STATE  → Animated progress indicator, live status polling
- * COMPLETED STATE → Score ring, model comparison bars, metrics table,
- *                   feature list, prediction panel
- * FAILED STATE    → Error message with re-train CTA
- *
- * Real-time updates arrive via Supabase Realtime + 3s interval fallback
- * (both wired inside useSingleProject).
+ * Pembaruan data secara real-time diterima melalui Supabase Realtime dengan 
+ * fallback interval 3 detik (diatur di dalam custom hook `useSingleProject`).
  */
 
 import { use } from "react";
@@ -32,15 +32,24 @@ import {
   RefreshCw, List,
 } from "lucide-react";
 
+/**
+ * Properti untuk ProjectPage.
+ * @property {Promise<{ id: string }>} params - Parameter rute dinamis dari Next.js.
+ */
 interface PageProps {
   params: Promise<{ id: string }>;
 }
 
 export default function ProjectPage({ params }: PageProps) {
+  // Unwrapping params menggunakan hooks `use` (pola standar Next.js 15+ untuk async route params)
   const { id } = use(params);
+  
+  // Mengambil data project dan status loading dari custom hook yang terhubung ke Supabase
   const { project, loading } = useSingleProject(id);
 
-  // ── Loading ───────────────────────────────────────────────────────────────
+  // ── 1. Handling State: Loading & Not Found ────────────────────────────────
+  
+  // Jika data masih di-fetch dari server
   if (loading && !project) {
     return (
       <div className="flex items-center justify-center py-32">
@@ -49,6 +58,7 @@ export default function ProjectPage({ params }: PageProps) {
     );
   }
 
+  // Jika loading selesai tapi project tidak ditemukan di database
   if (!project) {
     return (
       <div className="page-enter text-center py-24">
@@ -60,6 +70,7 @@ export default function ProjectPage({ params }: PageProps) {
     );
   }
 
+  // ── 2. Identifikasi Status Project ────────────────────────────────────────
   const isTraining  = project.status === "training"  || project.status === "pending";
   const isCompleted = project.status === "completed";
   const isFailed    = project.status === "failed";
@@ -67,7 +78,8 @@ export default function ProjectPage({ params }: PageProps) {
   return (
     <div className="page-enter space-y-8">
 
-      {/* ── Breadcrumb / header ───────────────────────────────────────────── */}
+      {/* ── Header Global & Breadcrumb ────────────────────────────────────── */}
+      {/* Bagian ini selalu di-render selama project ada, terlepas dari statusnya */}
       <div>
         <div className="flex items-center gap-1.5 text-ink-4 font-mono text-xs mb-4">
           <Link href="/dashboard" className="hover:text-ink-2 transition-colors">
@@ -83,6 +95,7 @@ export default function ProjectPage({ params }: PageProps) {
               <h1 className="font-display text-3xl text-ink-1">{project.name}</h1>
               <StatusBadge status={project.status} />
             </div>
+            {/* Metadata Project (Tipe Task, Target Kolom, Nama Dataset, Waktu Dibuat) */}
             <div className="flex items-center gap-4 flex-wrap">
               {project.task_type && (
                 <span className="flex items-center gap-1.5 font-mono text-xs text-ink-4">
@@ -117,13 +130,13 @@ export default function ProjectPage({ params }: PageProps) {
       </div>
 
       {/* ════════════════════════════════════════════════════════════════════ */}
-      {/* TRAINING STATE                                                       */}
+      {/* 3A. TRAINING STATE                                                     */}
       {/* ════════════════════════════════════════════════════════════════════ */}
       {isTraining && (
         <div className="space-y-6">
           <TrainingPulse message="AutoML pipeline is running…" />
 
-          {/* What's happening under the hood */}
+          {/* Menampilkan rincian tahapan pipeline AutoML yang sedang berjalan */}
           <div className="card p-6">
             <h2 className="font-sans font-medium text-ink-1 mb-5 flex items-center gap-2">
               <Zap className="w-4 h-4 text-copper" />
@@ -136,10 +149,10 @@ export default function ProjectPage({ params }: PageProps) {
                     "w-6 h-6 rounded-full shrink-0 flex items-center justify-center mt-0.5",
                     "font-mono text-xs font-bold",
                     done
-                      ? "bg-jade/20 border border-jade/30 text-jade"
+                      ? "bg-jade/20 border border-jade/30 text-jade" // Tahap selesai (Hijau)
                       : i === PIPELINE_STAGES.filter(s => s.done).length
-                      ? "bg-copper/20 border border-copper/30 text-copper animate-pulse"
-                      : "bg-surface-3 border border-surface-border text-ink-5"
+                      ? "bg-copper/20 border border-copper/30 text-copper animate-pulse" // Tahap aktif (Tembaga berkedip)
+                      : "bg-surface-3 border border-surface-border text-ink-5" // Tahap menunggu (Abu-abu)
                   )}>
                     {done ? "✓" : i + 1}
                   </div>
@@ -157,7 +170,7 @@ export default function ProjectPage({ params }: PageProps) {
             </div>
           </div>
 
-          {/* Polling indicator */}
+          {/* Indikator Live Polling */}
           <div className="flex items-center gap-2 text-ink-4 font-mono text-xs">
             <RefreshCw className="w-3 h-3 animate-spin-slow" />
             Checking for updates every 3 seconds via Supabase Realtime
@@ -166,7 +179,7 @@ export default function ProjectPage({ params }: PageProps) {
       )}
 
       {/* ════════════════════════════════════════════════════════════════════ */}
-      {/* FAILED STATE                                                         */}
+      {/* 3B. FAILED STATE                                                       */}
       {/* ════════════════════════════════════════════════════════════════════ */}
       {isFailed && (
         <div className="space-y-5">
@@ -175,6 +188,7 @@ export default function ProjectPage({ params }: PageProps) {
               <AlertCircle className="w-5 h-5 text-crimson mt-0.5 shrink-0" />
               <div>
                 <h3 className="font-sans font-medium text-crimson mb-2">Training Failed</h3>
+                {/* Render pesan error aktual dari backend jika tersedia */}
                 {project.error_message && (
                   <pre className="font-mono text-xs text-crimson/80 whitespace-pre-wrap
                                   bg-crimson/5 rounded p-3 mt-2 border border-crimson/10">
@@ -184,6 +198,7 @@ export default function ProjectPage({ params }: PageProps) {
               </div>
             </div>
           </div>
+          {/* Tombol aksi untuk retry/membuat project baru */}
           <div className="flex gap-3">
             <Link href="/dashboard/new" className="btn-primary">
               <RefreshCw className="w-4 h-4" /> Try Again with New Dataset
@@ -196,15 +211,15 @@ export default function ProjectPage({ params }: PageProps) {
       )}
 
       {/* ════════════════════════════════════════════════════════════════════ */}
-      {/* COMPLETED STATE                                                      */}
+      {/* 3C. COMPLETED STATE                                                    */}
       {/* ════════════════════════════════════════════════════════════════════ */}
       {isCompleted && (
         <div className="space-y-8">
 
-          {/* KPI row */}
+          {/* Baris KPI (Key Performance Indicators) */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
 
-            {/* Score ring — prominent */}
+            {/* Visualisasi skor melingkar (ScoreRing) yang prominen */}
             <div className="card card-accent p-5 flex flex-col items-center justify-center
                             col-span-2 sm:col-span-1">
               <ScoreRing
@@ -215,6 +230,7 @@ export default function ProjectPage({ params }: PageProps) {
               />
             </div>
 
+            {/* Kartu metrik detail pendukung */}
             <MetricCard
               label="Best Model"
               value={formatModelName(project.winning_model)}
@@ -237,10 +253,10 @@ export default function ProjectPage({ params }: PageProps) {
             />
           </div>
 
-          {/* Model comparison + metrics */}
+          {/* Grid visualisasi perbandingan model dan daftar fitur dataset */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
 
-            {/* Model comparison bars */}
+            {/* Bar chart perbandingan skor antar model kandidat */}
             <div className="card card-accent p-6">
               <ModelComparisonBar
                 allScores={project.all_scores}
@@ -249,7 +265,7 @@ export default function ProjectPage({ params }: PageProps) {
               />
             </div>
 
-            {/* Feature list */}
+            {/* List fitur (kolom input) yang digunakan model untuk inferensi */}
             <div className="card card-accent p-6">
               <div className="flex items-center gap-2 mb-4">
                 <List className="w-4 h-4 text-ink-4" />
@@ -272,7 +288,7 @@ export default function ProjectPage({ params }: PageProps) {
             </div>
           </div>
 
-          {/* Trained at */}
+          {/* Waktu penyelesaian training */}
           {project.trained_at && (
             <div className="flex items-center gap-2 text-ink-4 font-mono text-xs">
               <Clock className="w-3.5 h-3.5" />
@@ -280,7 +296,7 @@ export default function ProjectPage({ params }: PageProps) {
             </div>
           )}
 
-          {/* ── Prediction panel ─────────────────────────────────────────── */}
+          {/* ── Panel Prediksi (Live Inference) ───────────────────────────── */}
           <div className="card card-accent">
             <div className="p-6 border-b border-surface-border">
               <div className="flex items-center gap-3">
@@ -298,6 +314,7 @@ export default function ProjectPage({ params }: PageProps) {
                 </div>
               </div>
             </div>
+            {/* Memanggil komponen PredictionPanel dengan melempar data project */}
             <div className="p-6">
               <PredictionPanel project={project} />
             </div>
@@ -309,8 +326,8 @@ export default function ProjectPage({ params }: PageProps) {
 }
 
 // ── Pipeline stage descriptions ───────────────────────────────────────────────
-// The "done" flags are illustrative — a real implementation would track
-// sub-status in the DB. For now, none are done until the project completes.
+// Penanda "done" saat ini bersifat ilustratif. Implementasi riil nantinya dapat
+// melacak sub-status secara dinamis dari tabel database.
 
 const PIPELINE_STAGES = [
   {
