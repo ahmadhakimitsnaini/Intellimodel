@@ -116,7 +116,7 @@ docker-compose up --build
 |---|---|---|
 | **Step 1** | ✅ Done | Project setup, Supabase init SQL, FastAPI boilerplate |
 | **Step 2** | ✅ Done | AutoML pipeline (preprocess → train → evaluate → upload) |
-| **Step 3** | 🔜 | Frontend: Auth, CSV upload, column selector |
+| **Step 3** | ✅ | Frontend: Auth, CSV upload, column selector |
 | **Step 4** | 🔜 | Prediction endpoint with model caching |
 | **Step 5** | 🔜 | Frontend: Dashboard + prediction UI |
 | **Step 6** | 🔜 | Production hardening (rate limiting, error recovery) |
