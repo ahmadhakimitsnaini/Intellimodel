@@ -3,12 +3,12 @@
 /**
  * components/predict/PredictPanel.tsx
  *
- * Dynamic prediction form built entirely from the project's feature_columns list.
- * Calls GET /predict/{project_id}/schema to understand expected types, then
- * renders one input field per feature. On submit, calls POST /predict/{project_id}.
- *
- * For classification: shows prediction label + probability bar per class.
- * For regression: shows predicted value with context.
+ * Formulir prediksi dinamis yang dibangun secara otomatis berdasarkan daftar `feature_columns` 
+ * dari sebuah project. 
+ * - Render: Membuat satu input text untuk setiap fitur.
+ * - Submit: Memanggil endpoint POST /predict/{project_id} di backend FastAPI.
+ * - Result (Classification): Menampilkan label prediksi pemenang dan bar chart probabilitas tiap kelas.
+ * - Result (Regression): Menampilkan nilai prediksi aktual beserta konteksnya.
  */
 
 import { useState, useEffect } from "react";
@@ -20,10 +20,16 @@ import {
   BarChart3, TrendingUp, RefreshCw,
 } from "lucide-react";
 
+/**
+ * Properti untuk PredictPanel.
+ */
 interface PredictPanelProps {
   project: Project;
 }
 
+/**
+ * Tipe data kembalian (response) dari endpoint API prediksi.
+ */
 interface PredictResult {
   prediction: string | number;
   prediction_label: string | null;
@@ -34,12 +40,16 @@ interface PredictResult {
   task_type: string;
 }
 
+/**
+ * Struktur state untuk memonitor nilai dan error pada setiap input field.
+ */
 interface FieldValue {
   value: string;
   error: string | null;
 }
 
 export function PredictPanel({ project }: PredictPanelProps) {
+  // ── 1. States ──────────────────────────────────────────────────────────────
   const [fields, setFields] = useState<Record<string, FieldValue>>({});
   const [result, setResult] = useState<PredictResult | null>(null);
   const [loading, setLoading] = useState(false);
@@ -48,19 +58,25 @@ export function PredictPanel({ project }: PredictPanelProps) {
   const features = project.feature_columns ?? [];
   const taskType = project.task_type;
 
-  // Initialise field state from feature_columns
+  // ── 2. Inisialisasi Form ───────────────────────────────────────────────────
+  // Membangun objek state `fields` secara dinamis saat komponen di-mount atau
+  // ketika daftar fitur berubah.
   useEffect(() => {
     const init: Record<string, FieldValue> = {};
     features.forEach((col) => { init[col] = { value: "", error: null }; });
     setFields(init);
+  // Rule ESLint diabaikan di sini karena kita ingin men-trigger efek ini HANYA
+  // jika susunan string array `features` berubah, bukan referensinya.
   }, [features.join(",")]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Handler untuk memperbarui nilai satu field tertentu
   const setField = (col: string, value: string) => {
     setFields((prev) => ({ ...prev, [col]: { value, error: null } }));
   };
 
+  // ── 3. Validasi & Submit ───────────────────────────────────────────────────
   const validateAndSubmit = async () => {
-    // Validate — all fields required for now
+    // A. Validasi Klien: Pastikan semua field tidak kosong (required)
     let hasError = false;
     const updated = { ...fields };
     features.forEach((col) => {
@@ -70,14 +86,19 @@ export function PredictPanel({ project }: PredictPanelProps) {
       }
     });
     setFields(updated);
+    
+    // Hentikan proses jika ada input yang kosong
     if (hasError) return;
 
+    // Reset status sebelum mengirim request
     setLoading(true);
     setError(null);
     setResult(null);
 
     try {
-      // Build features object — coerce to number if possible
+      // B. Penyusunan Payload (Data preparation)
+      // Mencoba mengubah string input menjadi angka (Number). 
+      // Jika gagal (NaN) atau field memang sengaja kosong, biarkan sebagai string.
       const featurePayload: Record<string, string | number> = {};
       features.forEach((col) => {
         const raw = fields[col]?.value.trim() ?? "";
@@ -85,17 +106,21 @@ export function PredictPanel({ project }: PredictPanelProps) {
         featurePayload[col] = isNaN(num) || raw === "" ? raw : num;
       });
 
+      // C. Pemanggilan API
       const res = await fetch(`${FASTAPI_URL}/predict/${project.id}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ features: featurePayload }),
       });
 
+      // D. Penanganan Error dari Backend
       if (!res.ok) {
+        // Coba baca body error JSON jika ada, fallback ke {} jika formatnya bukan JSON
         const body = await res.json().catch(() => ({}));
         throw new Error(body?.detail ?? `API error ${res.status}`);
       }
 
+      // E. Sukses
       const data = await res.json();
       setResult(data);
     } catch (e: unknown) {
@@ -105,6 +130,7 @@ export function PredictPanel({ project }: PredictPanelProps) {
     }
   };
 
+  // ── 4. Fungsi Utility ──────────────────────────────────────────────────────
   const clearForm = () => {
     const cleared: Record<string, FieldValue> = {};
     features.forEach((col) => { cleared[col] = { value: "", error: null }; });
@@ -113,6 +139,7 @@ export function PredictPanel({ project }: PredictPanelProps) {
     setError(null);
   };
 
+  // ── 5. Render: Empty State ─────────────────────────────────────────────────
   if (features.length === 0) {
     return (
       <div className="p-6 text-center text-ink-4 font-mono text-sm">
@@ -121,10 +148,11 @@ export function PredictPanel({ project }: PredictPanelProps) {
     );
   }
 
+  // ── 6. Render: Main UI ─────────────────────────────────────────────────────
   return (
     <div className="space-y-6">
 
-      {/* Feature input grid */}
+      {/* Grid Input Dinamis */}
       <div>
         <div className="flex items-center justify-between mb-4">
           <span className="mono-label">Input Features ({features.length})</span>
@@ -140,6 +168,7 @@ export function PredictPanel({ project }: PredictPanelProps) {
             const field = fields[col] ?? { value: "", error: null };
             return (
               <div key={col}>
+                {/* Label dengan penanganan error warna (merah) */}
                 <label className={cn(
                   "block font-mono text-xs mb-1",
                   field.error ? "text-crimson" : "text-ink-4"
@@ -153,6 +182,7 @@ export function PredictPanel({ project }: PredictPanelProps) {
                   type="text"
                   value={field.value}
                   onChange={(e) => setField(col, e.target.value)}
+                  // Mendukung submit cepat dengan menekan tombol Enter
                   onKeyDown={(e) => {
                     if (e.key === "Enter") validateAndSubmit();
                   }}
@@ -168,7 +198,7 @@ export function PredictPanel({ project }: PredictPanelProps) {
         </div>
       </div>
 
-      {/* Submit */}
+      {/* Tombol Submit (Loading / Idle) */}
       <button
         onClick={validateAndSubmit}
         disabled={loading}
@@ -180,7 +210,7 @@ export function PredictPanel({ project }: PredictPanelProps) {
         }
       </button>
 
-      {/* Error */}
+      {/* Pesan Error (Banner) */}
       {error && (
         <div className="flex items-start gap-2.5 p-3 rounded-md
                         bg-crimson-glow border border-crimson/20">
@@ -189,11 +219,11 @@ export function PredictPanel({ project }: PredictPanelProps) {
         </div>
       )}
 
-      {/* Result */}
+      {/* ── 7. Render: Hasil Prediksi ───────────────────────────────────────── */}
       {result && !error && (
         <div className="card card-accent p-5 animate-fade-up space-y-5">
 
-          {/* Header */}
+          {/* Header Hasil */}
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 rounded-lg bg-jade-glow border border-jade/20
                             flex items-center justify-center shrink-0">
@@ -207,10 +237,10 @@ export function PredictPanel({ project }: PredictPanelProps) {
             </div>
           </div>
 
-          {/* Classification result */}
+          {/* Render A: Jika mode adalah Klasifikasi */}
           {taskType === "classification" && result.all_probabilities && (
             <div>
-              {/* Winning class */}
+              {/* Box Pemenang (Winning Class) */}
               <div className="flex items-center justify-between mb-4 p-3 rounded-lg
                               bg-jade-glow border border-jade/20">
                 <div>
@@ -229,13 +259,14 @@ export function PredictPanel({ project }: PredictPanelProps) {
                 )}
               </div>
 
-              {/* Probability breakdown */}
+              {/* Rincian Probabilitas setiap kelas (Bar Chart) */}
               <div>
                 <div className="flex items-center gap-1.5 mb-3">
                   <BarChart3 className="w-3.5 h-3.5 text-ink-4" />
                   <span className="mono-label">Class Probabilities</span>
                 </div>
                 <div className="space-y-2.5">
+                  {/* Sorting array untuk menaruh nilai persentase terbesar di atas */}
                   {Object.entries(result.all_probabilities)
                     .sort(([, a], [, b]) => b - a)
                     .map(([cls, prob]) => {
@@ -256,6 +287,7 @@ export function PredictPanel({ project }: PredictPanelProps) {
                               {(prob * 100).toFixed(1)}%
                             </span>
                           </div>
+                          {/* Progress bar visual untuk persentase */}
                           <div className="h-1.5 bg-surface-3 rounded-full overflow-hidden">
                             <div
                               className={cn(
@@ -273,7 +305,7 @@ export function PredictPanel({ project }: PredictPanelProps) {
             </div>
           )}
 
-          {/* Regression result */}
+          {/* Render B: Jika mode adalah Regresi */}
           {taskType === "regression" && (
             <div className="p-3 rounded-lg bg-copper-glow border border-copper/20">
               <div className="flex items-center gap-2 mb-3">
@@ -281,6 +313,7 @@ export function PredictPanel({ project }: PredictPanelProps) {
                 <p className="mono-label">Predicted Value</p>
               </div>
               <p className="font-mono font-bold text-3xl text-copper">
+                {/* Memformat angka menjadi desimal (maks 4 digit) jika tipenya number */}
                 {typeof result.prediction === "number"
                   ? result.prediction.toLocaleString(undefined, {
                       maximumFractionDigits: 4,
